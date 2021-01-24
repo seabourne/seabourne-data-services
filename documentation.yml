@@ -1,0 +1,18 @@
+toc:
+  - name: Introduction
+    namespace: introduction
+    description: |
+        The Seabourne Data Services package provides classes for serving
+        data from a network source to network clients.
+  - name: License
+    description: |
+        [MIT](https://github.com/seabourne/seabourne-data-services/blob/master/LICENSE)
+  - name: Service Classes
+    description: ""
+    children:
+      - StreamedDataService
+  - name: Support Classes
+    description: |
+        The package also includes a handful of support classes.
+    children:
+      - NDJSONEncodeStream
