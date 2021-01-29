@@ -1,5 +1,7 @@
 'use strict'
 
+import morph from 'morph'
+
 import NDJSONEncodeStream from './NDJSONEncodeStream.js'
 
 /** Streamed data service.
@@ -49,9 +51,39 @@ class StreamedDataService {
     ndjsonEncode.pipe(res)
   }
 
-  static service(options) {
-    let service = new StreamedDataService(options)
-    return service.serve
+  /** Picks params from request.
+   * For a GET request, retrieves parameters from the query object;
+   * for a POST request, from the request body. In either case,
+   * converts parameter names to camel-case.
+   *
+   * Note: This method has landed here for want of any obviously better
+   * place to put it. It's handy for an API that allows requests to be
+   * submitted with a GET method (with request parameters specified as
+   * query parameters) or with a POST method (with request parameters
+   * specified in the request body).
+   *
+   * @param {Object} req - request object
+   * @return {Object} parameters
+   */
+  static pickParams(req) {
+    let params = {}
+    switch (req.method) {
+    case 'GET':
+      for (let key in req.query) {
+        let prop = morph.toCamel(key)
+        params[prop] = req.query[key]
+      }
+      break
+    case 'POST':
+      for (let key in req.body) {
+        let prop = morph.toCamel(key)
+        params[prop] = req.body[key]
+      }
+      break
+    default:
+      throw new Error(`Data request ${req.method} method is not allowed.`)
+    }
+    return params
   }
 
 }
