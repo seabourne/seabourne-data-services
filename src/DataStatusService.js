@@ -72,7 +72,7 @@ class DataStatusService {
         clientState = this._getClientState(clientId)
 
     if (clientState.closeHandler) {
-      this.log.warn(`Entity status request from ${clientId}, request already active`)
+      console.log(`Entity status request from ${clientId}, request already active`)
       req.removeListener('close', clientState.closeHandler)
     }
 

@@ -11,13 +11,22 @@ import { getMockReq, getMockRes } from '@jest-mock/express'
 
 function getEventedMockReq(options) {
   let req = getMockReq(options)
-  req.addListener = req.on = (eventName, listener) => {
-    let listeners = req.__listeners || (req.__listeners = {}),
+  req.addListener = req.on = function (eventName, listener) {
+    let listeners = this.__listeners || (this.__listeners = {}),
         eventListeners = listeners[eventName] || (listeners[eventName] = [])
     eventListeners.push(listener)
+    return this
   }
-  req.emit = (eventName, ...args) => {
-    let eventListeners = req.__listeners && req.__listeners[eventName]
+  req.removeListener = req.off = function (eventName, listener) {
+    let eventListeners = this.__listeners && this.__listeners[eventName]
+    if (eventListeners) {
+      let idx = eventListeners.indexOf(listener)
+      if (idx >= 0) eventListeners.splice(idx, 1)
+    }
+    return this
+  }
+  req.emit = function (eventName, ...args) {
+    let eventListeners = this.__listeners && this.__listeners[eventName]
     if (eventListeners) {
       for (let listener of eventListeners)
         listener(...args)
@@ -221,6 +230,13 @@ debugger;
     it('should register entity types', () => {
       let times = Object.keys(testTimestamps).reduce((acc, key) => { acc[key] = 0; return acc }, {})
       service.registerEntityType(clientId, 'test', times)
+    })
+    it('should reinitialize server context', () => {
+      service.statusServer(mockRequest, mockResponse)
+      let writable = mockResponseContext.writable
+      let chunks = writable.clear(),
+          headers = expectHeader(200, chunks)
+      expect(chunks[0]).toEqual('\n')
     })
   })
 
