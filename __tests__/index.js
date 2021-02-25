@@ -202,6 +202,27 @@ describe('StreamedDataService class', () => {
     })
   })
 
+  describe('getData() corner cases', () => {
+    it('should send empty NDJSON stream for undefined header and stream', async () => {
+      mockRequest = getMockReq()
+      mockResponseContext = getWritableMockRes()
+      mockResponse = mockResponseContext.res
+      service = new StreamedDataService({
+        key: NDJSONEncodeStream.makeKeyFn('_id', 'test'),
+        async getData(req) {
+          return []
+        }
+      })
+      await service.serve(mockRequest, mockResponse)
+      let writable = mockResponseContext.writable
+      await writable.finished
+      let chunks = writable.clear(),
+          headers = expectHeader(200, chunks)
+      expect(chunks.length).toEqual(1)
+      expect(JSON.parse(chunks[0])).toEqual(responseHeader)
+    })
+  })
+
 })
 
 describe('DataStatusService class', () => {

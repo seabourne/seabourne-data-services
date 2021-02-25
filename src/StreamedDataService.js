@@ -42,12 +42,12 @@ class StreamedDataService {
   get serve() { return this._serve.bind(this) }
   async _serve(req, res) {
     let [header, entities] = await this._getData(req)
-    header = {count: -1, update: false, errors: [], ...header}
+    header = {count: entities ? -1 : 0, update: false, errors: [], ...header}
 
     const ndjsonEncode = new NDJSONEncodeStream({key: this._makeKey, prefixes: [header]})
 
     res.writeHead(200, {'Content-Type': 'application/x-ndjson' })
-    entities.pipe(ndjsonEncode)
+    if (entities) entities.pipe(ndjsonEncode); else ndjsonEncode.end()
     ndjsonEncode.pipe(res)
   }
 
