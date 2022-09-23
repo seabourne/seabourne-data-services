@@ -6,7 +6,7 @@
  *
  * Configuration for use:
  * *   The `statusServer()` method needs to be assigned as the handler
- *     for the `EventSource` rount. For example:
+ *     for the `EventSource` route. For example:
  *         ```
  *         router.route('get', this.eventPrefix + '/status', statusService.statusServer)
  *         ```
@@ -33,7 +33,10 @@ class DataStatusService {
 
   /** Registers status events for specified entity type.
    * No-op if events are already registered for entity type. The
-   * timestamps in the `times` parameter may be zero-valued
+   * timestamps in the `times` parameter restrict which timestamps
+   * indicate changes for the entity type. (Other timestamps passed to
+   * `recordTimestampChanges()` don't affect the entity type.) The
+   * timestamp times in the `times` parameter may be zero-valued
    * placeholders.
    * @param {string} clientId client id; conventionally, a session id
    * @param {string} entityType entity type; conventionally, consists
@@ -46,7 +49,8 @@ class DataStatusService {
     let clientState = this._getClientState(clientId)
     if (!clientState.res)
       console.log(`Registering ${entityType} entity type, no socket for client ${clientId}`)
-    this._updateTimestamps(clientId, entityType, times)
+    if (!clientState.entityStates[entityType])
+      clientState.entityStates[entityType] = {entityType, times: {...times}}
   }
 
   /** Records timestamp changes.
@@ -101,10 +105,11 @@ class DataStatusService {
     let clientState = this._getClientState(clientId),
         entityState = clientState.entityStates[entityType] || (clientState.entityStates[entityType] = {entityType, times: {}})
     for (let name in superseded) {
-      let time = entityState.times[name] || (entityState.times[name] = 0)
-      if (superseded[name] > time) {
-        if (!entityState.superseded) entityState.superseded = {}
-        entityState.superseded[name] = superseded[name]
+      if (entityState.times.hasOwnProperty(name)) {
+        if (superseded[name] > entityState.times[name]) {
+          if (!entityState.superseded) entityState.superseded = {}
+          entityState.superseded[name] = superseded[name]
+        }
       }
     }
     if (entityState.superseded && !entityState.timeoutId)
